@@ -13,3 +13,13 @@ class TernarySearchTree:
             self._ls = None #Next node that has a character lesser
             self._eq = None #Next node that is the following character of the word
             self._gt = None #Nets node that has a character greater
+            
+    def insert(self, word):
+        self.words_list.append(word) #updates list of all words
+        self.word_count += 1 #updates the number of words added
+
+    def __len__(self):
+        return self.word_count #returns number of words
+
+    def all_strings(self):
+        return self.words_list #returns list of words
