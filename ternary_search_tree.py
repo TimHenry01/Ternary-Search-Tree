@@ -9,7 +9,7 @@ class TernarySearchTree:
     class Node:
         def __init__(self, char):
             self.char = char #Letter that is stored in the node
-            self.end_of_word = False #False when the letter is the end of the word, True otherwise
+            self.end_of_word = False #True when the letter is the end of the word
             self._ls = None #Next node that has a character lesser
             self._eq = None #Next node that is the following character of the word
             self._gt = None #Nets node that has a character greater
@@ -31,10 +31,8 @@ class TernarySearchTree:
 
         if char < node.char:
             node._ls = self.insert_character(node._ls, word, index) #go left
-            
         elif char > node.char:
             node._gt = self.insert_character(node._gt, word, index) #go right
-            
         else:
             if index + 1 == len(word):
                 node.end_of_word = True #marks as end of the word
@@ -71,8 +69,37 @@ class TernarySearchTree:
 
     #Tree visualization
     def __str__(self):
-        
         if self.root is None:
             return "" #return nothing if tree is empty
-            
         return "terminates: False\n" + self._str_helper(self.root) #starts visualization starting from the root
+
+
+    #Helper function for search tool
+    def search_helper(self, node, word, index):
+        if node is None:
+            return None #if the node doesn't exist, then the word doesn't either
+
+        char = word[index] #current letter to compare
+        
+        if char < node.char:
+            return self.search_helper(node._ls, word, index) #going to left node
+        
+        elif char > node.char:
+            return self.search_helper(node._gt, word, index) #going to right node
+        
+        else:
+            if index + 1 == len(word):
+                return node #return node if last character
+            return self.search_helper(node._eq, word, index + 1) #going to middle node
+
+    #Search tool
+    def search(self, word, exact=False):
+        if word == '':
+            return False #empty string are not stored in the tree
+
+        node = self.search_helper(self.root, word, 0) #search for the node matching the last character
+        
+        if not node:
+            return False #if the node doesn't exist, then the word doesn't either
+
+        return True #word found
