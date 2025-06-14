@@ -103,3 +103,106 @@ class TernarySearchTree:
             return False #if the node doesn't exist, then the word doesn't either
 
         return True #word found
+
+    def delete(self, word):
+        """
+        Delete a word from the ternary search tree.
+        
+        Args:
+            word (str): The word to delete
+            
+        Returns:
+            bool: True if word was deleted, False if word didn't exist
+        """
+        if not isinstance(word, str) or not word:
+            return False
+        
+        word = word.lower().strip()
+        if not word or not self._contains(word):
+            return False
+        
+        self.root = self._delete_recursive(self.root, word, 0)
+        self.word_count -= 1
+        return True
+
+    def _delete_recursive(self, node, word, index):
+        """
+        Recursively delete a word from the tree.
+        
+        Args:
+            node: Current node
+            word: Word being deleted
+            index: Current character index
+            
+        Returns:
+            Node: The root of the subtree after deletion
+        """
+        if node is None:
+            return None
+        
+        char = word[index]
+        
+        if char < node.char:
+            node._ls = self._delete_recursive(node._ls, word, index)
+        elif char > node.char:
+            node._gt = self._delete_recursive(node._gt, word, index)
+        else:  # char == node.char
+            if index == len(word) - 1:
+                node.end_of_word = False
+            else:
+                node._eq = self._delete_recursive(node._eq, word, index + 1)
+        
+        # Remove node if it's not useful anymore
+        if (not node.end_of_word and 
+            node._ls is None and 
+            node._eq is None and 
+            node._gt is None):
+            return None
+        
+        return node
+
+    def is_empty(self):
+        """
+        Check if the tree is empty.
+        
+        Returns:
+            bool: True if tree is empty, False otherwise
+        """
+        return self.root is None
+
+    def clear(self):
+        """Clear all words from the tree."""
+        self.root = None
+        self.word_count = 0
+
+    def height(self):
+        """
+        Calculate the height of the tree.
+        
+        Returns:
+            int: Height of the tree (0 for empty tree)
+        """
+        return self._height_recursive(self.root)
+
+    def _height_recursive(self, node):
+        """
+        Recursively calculate height of subtree.
+        
+        Args:
+            node: Root of subtree
+            
+        Returns:
+            int: Height of subtree
+        """
+        if node is None:
+            return 0
+        
+        left_height = self._height_recursive(node._ls)
+        equal_height = self._height_recursive(node._eq) 
+        right_height = self._height_recursive(node._gt)
+        
+        return 1 + max(left_height, equal_height, right_height)
+
+    def __repr__(self):
+        """Detailed string representation."""
+        return f"TernarySearchTree(words={len(self)}, height={self.height()})"
