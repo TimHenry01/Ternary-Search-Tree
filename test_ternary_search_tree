@@ -1,0 +1,314 @@
+
+import unittest
+import sys
+import os
+
+# Add the parent directory to the path to import our module
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from ternary_search_tree import TernarySearchTree
+
+
+class TestTernarySearchTree(unittest.TestCase):
+    """Test cases for TernarySearchTree class."""
+    
+    def setUp(self):
+        """Set up test fixtures before each test method."""
+        self.tst = TernarySearchTree()
+        self.sample_words = ["cat", "cats", "up", "bug", "add", "at", "apple", "application"]
+    
+    def test_initialization(self):
+        """Test that tree initializes correctly."""
+        self.assertTrue(self.tst.is_empty())
+        self.assertEqual(len(self.tst), 0)
+        self.assertEqual(self.tst.height(), 0)
+        self.assertEqual(self.tst.all_strings(), [])
+    
+    def test_insert_single_word(self):
+        """Test inserting a single word."""
+        self.tst.insert("hello")
+        self.assertFalse(self.tst.is_empty())
+        self.assertEqual(len(self.tst), 1)
+        self.assertTrue(self.tst.search("hello"))
+        self.assertIn("hello", self.tst.all_strings())
+    
+    def test_insert_multiple_words(self):
+        """Test inserting multiple words."""
+        for word in self.sample_words:
+            self.tst.insert(word)
+        
+        self.assertEqual(len(self.tst), len(self.sample_words))
+        for word in self.sample_words:
+            self.assertTrue(self.tst.search(word))
+    
+    def test_insert_duplicate_words(self):
+        """Test that duplicate words are not inserted."""
+        self.tst.insert("hello")
+        self.tst.insert("hello")  # Duplicate
+        self.tst.insert("HELLO")  # Case variation should be treated as duplicate
+        
+        self.assertEqual(len(self.tst), 1)
+        self.assertTrue(self.tst.search("hello"))
+    
+    def test_insert_invalid_input(self):
+        """Test error handling for invalid input."""
+        with self.assertRaises(ValueError):
+            self.tst.insert("")  # Empty string
+        
+        with self.assertRaises(ValueError):
+            self.tst.insert("   ")  # Whitespace only
+        
+        with self.assertRaises(ValueError):
+            self.tst.insert(None)  # None
+        
+        with self.assertRaises(ValueError):
+            self.tst.insert(123)  # Non-string
+    
+    def test_search_existing_words(self):
+        """Test searching for words that exist."""
+        for word in self.sample_words:
+            self.tst.insert(word)
+        
+        for word in self.sample_words:
+            self.assertTrue(self.tst.search(word))
+            self.assertTrue(self.tst.search(word.upper()))  # Case insensitive
+    
+    def test_search_non_existing_words(self):
+        """Test searching for words that don't exist."""
+        for word in self.sample_words:
+            self.tst.insert(word)
+        
+        self.assertFalse(self.tst.search("nonexistent"))
+        self.assertFalse(self.tst.search("ca"))  # Prefix of "cat"
+        self.assertFalse(self.tst.search("catss"))  # Extension of "cats"
+    
+    def test_search_invalid_input(self):
+        """Test search with invalid input."""
+        self.assertFalse(self.tst.search(""))
+        self.assertFalse(self.tst.search(None))
+        self.assertFalse(self.tst.search(123))
+    
+    def test_delete_existing_words(self):
+        """Test deleting words that exist."""
+        for word in self.sample_words:
+            self.tst.insert(word)
+        
+        initial_count = len(self.tst)
+        self.assertTrue(self.tst.delete("cat"))
+        self.assertEqual(len(self.tst), initial_count - 1)
+        self.assertFalse(self.tst.search("cat"))
+        self.assertTrue(self.tst.search("cats"))  # Should not affect "cats"
+    
+    def test_delete_non_existing_words(self):
+        """Test deleting words that don't exist."""
+        for word in self.sample_words:
+            self.tst.insert(word)
+        
+        initial_count = len(self.tst)
+        self.assertFalse(self.tst.delete("nonexistent"))
+        self.assertEqual(len(self.tst), initial_count)
+    
+    def test_delete_invalid_input(self):
+        """Test delete with invalid input."""
+        self.assertFalse(self.tst.delete(""))
+        self.assertFalse(self.tst.delete(None))
+        self.assertFalse(self.tst.delete(123))
+    
+    def test_prefix_search(self):
+        """Test prefix search functionality."""
+        words = ["cat", "cats", "car", "card", "care", "careful", "apple", "application"]
+        for word in words:
+            self.tst.insert(word)
+        
+        # Test various prefixes
+        ca_words = self.tst.prefix_search("ca")
+        self.assertEqual(set(ca_words), {"cat", "cats", "car", "card", "care", "careful"})
+        
+        car_words = self.tst.prefix_search("car")
+        self.assertEqual(set(car_words), {"car", "card", "care", "careful"})
+        
+        app_words = self.tst.prefix_search("app")
+        self.assertEqual(set(app_words), {"apple", "application"})
+        
+        # Test exact match
+        exact_words = self.tst.prefix_search("cat")
+        self.assertEqual(set(exact_words), {"cat", "cats"})
+    
+    def test_prefix_search_no_matches(self):
+        """Test prefix search with no matches."""
+        for word in self.sample_words:
+            self.tst.insert(word)
+        
+        self.assertEqual(self.tst.prefix_search("xyz"), [])
+        self.assertEqual(self.tst.prefix_search("z"), [])
+    
+    def test_prefix_search_invalid_input(self):
+        """Test prefix search with invalid input."""
+        self.assertEqual(self.tst.prefix_search(""), [])
+        self.assertEqual(self.tst.prefix_search(None), [])
+        self.assertEqual(self.tst.prefix_search(123), [])
+    
+    def test_all_strings(self):
+        """Test retrieving all strings from the tree."""
+        for word in self.sample_words:
+            self.tst.insert(word)
+        
+        all_words = self.tst.all_strings()
+        self.assertEqual(set(all_words), set(self.sample_words))
+        self.assertEqual(all_words, sorted(all_words))  # Should be sorted
+    
+    def test_clear(self):
+        """Test clearing the tree."""
+        for word in self.sample_words:
+            self.tst.insert(word)
+        
+        self.assertFalse(self.tst.is_empty())
+        self.tst.clear()
+        self.assertTrue(self.tst.is_empty())
+        self.assertEqual(len(self.tst), 0)
+        self.assertEqual(self.tst.all_strings(), [])
+    
+    def test_height_calculation(self):
+        """Test tree height calculation."""
+        self.assertEqual(self.tst.height(), 0)  # Empty tree
+        
+        self.tst.insert("a")
+        self.assertGreaterEqual(self.tst.height(), 1)
+        
+        # Insert words that should create different tree structures
+        for word in ["ab", "abc", "abcd"]:
+            self.tst.insert(word)
+        
+        height = self.tst.height()
+        self.assertGreaterEqual(height, 4)  # At least the length of longest word
+    
+    def test_case_insensitivity(self):
+        """Test that the tree handles case insensitivity correctly."""
+        self.tst.insert("Hello")
+        self.tst.insert("WORLD")
+        self.tst.insert("tEsT")
+        
+        self.assertTrue(self.tst.search("hello"))
+        self.assertTrue(self.tst.search("world"))
+        self.assertTrue(self.tst.search("test"))
+        self.assertTrue(self.tst.search("HELLO"))
+        self.assertTrue(self.tst.search("World"))
+        self.assertTrue(self.tst.search("TEST"))
+    
+    def test_whitespace_handling(self):
+        """Test handling of whitespace in input."""
+        self.tst.insert("  hello  ")
+        self.tst.insert("\tworld\n")
+        
+        self.assertTrue(self.tst.search("hello"))
+        self.assertTrue(self.tst.search("world"))
+        self.assertTrue(self.tst.search("  hello  "))
+        self.assertTrue(self.tst.search("\tworld\n"))
+    
+    def test_string_representations(self):
+        """Test string representation methods."""
+        # Empty tree
+        self.assertIn("Empty", str(self.tst))
+        
+        # Non-empty tree
+        self.tst.insert("test")
+        self.assertIn("1 words", str(self.tst))
+        self.assertIn("words=1", repr(self.tst))
+    
+    def test_edge_cases(self):
+        """Test various edge cases."""
+        # Single character words
+        self.tst.insert("a")
+        self.tst.insert("b")
+        self.tst.insert("c")
+        
+        self.assertTrue(self.tst.search("a"))
+        self.assertTrue(self.tst.search("b"))
+        self.assertTrue(self.tst.search("c"))
+        
+        # Words with common prefixes
+        prefixed_words = ["test", "testing", "tester", "tests"]
+        for word in prefixed_words:
+            self.tst.insert(word)
+        
+        for word in prefixed_words:
+            self.assertTrue(self.tst.search(word))
+        
+        # Verify prefix search works correctly
+        test_prefixed = self.tst.prefix_search("test")
+        self.assertEqual(set(test_prefixed), set(prefixed_words))
+    
+    def test_performance_characteristics(self):
+        """Test basic performance characteristics."""
+        import time
+        
+        # Test insertion performance doesn't degrade dramatically
+        words = [f"word{i}" for i in range(1000)]
+        
+        start_time = time.time()
+        for word in words:
+            self.tst.insert(word)
+        insert_time = time.time() - start_time
+        
+        # Test search performance
+        start_time = time.time()
+        for word in words:
+            self.assertTrue(self.tst.search(word))
+        search_time = time.time() - start_time
+        
+        # Basic sanity checks (these are loose bounds)
+        self.assertLess(insert_time, 5.0)  # Should insert 1000 words in < 5 seconds
+        self.assertLess(search_time, 2.0)  # Should search 1000 words in < 2 seconds
+        self.assertEqual(len(self.tst), 1000)
+
+
+class TestTernarySearchTreeIntegration(unittest.TestCase):
+    """Integration tests for TernarySearchTree."""
+    
+    def test_realistic_dictionary(self):
+        """Test with a realistic set of dictionary words."""
+        dictionary = [
+            "apple", "application", "apply", "approach", "appropriate",
+            "banana", "band", "bank", "basic", "battle",
+            "cat", "catch", "category", "cause", "central",
+            "dog", "door", "down", "draw", "drive"
+        ]
+        
+        tst = TernarySearchTree()
+        
+        # Insert all words
+        for word in dictionary:
+            tst.insert(word)
+        
+        # Verify all words are findable
+        for word in dictionary:
+            self.assertTrue(tst.search(word))
+        
+        # Test prefix searches
+        app_words = tst.prefix_search("app")
+        self.assertIn("apple", app_words)
+        self.assertIn("application", app_words)
+        self.assertIn("apply", app_words)
+        self.assertIn("approach", app_words)
+        self.assertIn("appropriate", app_words)
+        
+        # Test that non-words are not found
+        self.assertFalse(tst.search("appl"))  # Prefix of apple
+        self.assertFalse(tst.search("applications"))  # Extension of application
+
+
+if __name__ == '__main__':
+    # Create a test suite
+    suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
+    
+    # Run tests with verbose output
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    # Print summary
+    print(f"\n{'='*50}")
+    print(f"Tests run: {result.testsRun}")
+    print(f"Failures: {len(result.failures)}")
+    print(f"Errors: {len(result.errors)}")
+    print(f"Success rate: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%")
+    print(f"{'='*50}")
