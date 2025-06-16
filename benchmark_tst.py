@@ -120,47 +120,6 @@ class TSTBenchmark:
         
         return word_counts, search_times
     
-    def benchmark_prefix_search_performance(self, word_counts=[100, 500, 1000, 2000, 5000]):
-        """Benchmark prefix search performance."""
-        print("Benchmarking prefix search performance...")
-        
-        prefix_times = []
-        
-        for count in word_counts:
-            print(f"  Testing with {count} words...")
-            
-            # Generate words with common prefixes
-            words = []
-            prefixes = ['test', 'data', 'word', 'bench', 'tree']
-            
-            for i in range(count):
-                prefix = random.choice(prefixes)
-                suffix = ''.join(random.choices(string.ascii_lowercase, k=random.randint(1, 6)))
-                words.append(f"{prefix}{suffix}")
-            
-            tst = TernarySearchTree()
-            for word in words:
-                tst.insert(word)
-            
-            # Measure prefix search time
-            start_time = time.perf_counter()
-            
-            for prefix in prefixes:
-                results = tst.prefix_search(prefix)
-            
-            end_time = time.perf_counter()
-            prefix_time = end_time - start_time
-            
-            prefix_times.append(prefix_time)
-            
-            # Store results
-            self.results['prefix_counts'].append(count)
-            self.results['prefix_times'].append(prefix_time)
-            
-            print(f"    Time: {prefix_time:.4f}s")
-        
-        return word_counts, prefix_times
-    
     def benchmark_worst_case_scenarios(self):
         """Test worst-case scenarios for TST operations."""
         print("Benchmarking worst-case scenarios...")
@@ -189,12 +148,11 @@ class TSTBenchmark:
                 tst.search(word)
             search_time = time.perf_counter() - start_time
             
-            # Store results
+            # Store results (height calls removed)
             self.results[f'worst_case_{scenario_name}_insert'] = insert_time
             self.results[f'worst_case_{scenario_name}_search'] = search_time
-            self.results[f'worst_case_{scenario_name}_height'] = tst.height()
             
-            print(f"    Insert: {insert_time:.4f}s, Search: {search_time:.4f}s, Height: {tst.height()}")
+            print(f"    Insert: {insert_time:.4f}s, Search: {search_time:.4f}s")
     
     def compare_with_builtin_structures(self, word_count=5000):
         """Compare TST performance with Python's built-in data structures."""
@@ -338,7 +296,7 @@ class TSTBenchmark:
                 report.append(f"  {count:5d} words: {time_taken:.4f}s ({rate:.0f} searches/sec)")
             report.append("")
         
-        # Worst case analysis
+        # Worst case scenarios - skipping height since you removed it
         worst_cases = [key for key in self.results.keys() if key.startswith('worst_case_')]
         if worst_cases:
             report.append("WORST CASE SCENARIOS:")
@@ -347,12 +305,10 @@ class TSTBenchmark:
             for scenario in scenarios:
                 insert_key = f'worst_case_{scenario}_insert'
                 search_key = f'worst_case_{scenario}_search'
-                height_key = f'worst_case_{scenario}_height'
-                if all(key in self.results for key in [insert_key, search_key, height_key]):
+                if insert_key in self.results and search_key in self.results:
                     report.append(f"  {scenario.replace('_', ' ').title()}:")
                     report.append(f"    Insert: {self.results[insert_key]:.4f}s")
                     report.append(f"    Search: {self.results[search_key]:.4f}s")
-                    report.append(f"    Height: {self.results[height_key]}")
             report.append("")
         
         # Comparison with built-in structures
@@ -365,7 +321,7 @@ class TSTBenchmark:
             report.append(f"  List   - Insert: {comp['list_insert']:.4f}s, Search: {comp['list_search']:.4f}s")
             report.append("")
         
-        # Complexity analysis
+        # Theoretical complexity (optional)
         report.append("THEORETICAL COMPLEXITY ANALYSIS:")
         report.append("-" * 32)
         report.append("  Insert:")
@@ -375,4 +331,40 @@ class TSTBenchmark:
         report.append("  Search:")
         report.append("    Best case:    O(log n)")
         report.append("    Average case: O(log n)")
-        report.append("    Worst case:
+        report.append("    Worst case:   O(n)")
+        report.append("")
+        report.append("NOTES:")
+        report.append("- Insert/search times are influenced by input distribution.")
+        report.append("- Memory usage is measured using tracemalloc and may vary per run.")
+        report.append("- List structure suffers on search due to linear lookup time.")
+        report.append("- TST is optimized for prefix and near-prefix retrievals.")
+        report.append("")
+        
+        # Save report to file
+        report_path = "tst_performance_report.txt"
+        with open(report_path, 'w') as f:
+            f.write("\n".join(report))
+        
+        print(f"  Saved performance report to '{report_path}'")
+
+
+if __name__ == "__main__":
+    benchmark = TSTBenchmark()
+    
+    # Run insert benchmark
+    benchmark.benchmark_insert_performance()
+    
+    # Run search benchmark
+    benchmark.benchmark_search_performance()
+    
+    # Run worst case scenarios benchmark
+    benchmark.benchmark_worst_case_scenarios()
+    
+    # Compare with built-in structures
+    benchmark.compare_with_builtin_structures()
+    
+    # Create plots
+    benchmark.create_performance_plots()
+    
+    # Generate textual report
+    benchmark.generate_report()
