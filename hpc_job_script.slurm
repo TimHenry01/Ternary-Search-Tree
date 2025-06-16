@@ -21,19 +21,25 @@ echo "========================================"
 
 # Load required modules (adjust based on your HPC environment)
 module purge
-module load Python/3.9.6-GCCcore-11.2.0
+module load cluster/genius/batch
+module load Python/3.13.1-GCCcore-14.2.0
 # module load matplotlib/3.5.2-foss-2022a  # Uncomment if needed
 # module load numpy/1.21.3-foss-2022a      # Uncomment if needed
 
 # Set up Python environment
 export PYTHONPATH=$PYTHONPATH:$PWD
 
+# Ensure we start from the submission directory
+cd $SLURM_SUBMIT_DIR || { echo "Failed to cd to SLURM_SUBMIT_DIR"; exit 1; }
+
 # Create output directory for results
 mkdir -p benchmark_results
-cd benchmark_results
 
-# Copy benchmark files to current directory
-cp ../*.py .
+# Copy benchmark files to results directory
+cp *.py benchmark_results/
+
+# Move into benchmark_results directory to run benchmarks and save outputs there
+cd benchmark_results || { echo "Failed to cd into benchmark_results"; exit 1; }
 
 echo "Installing required Python packages..."
 pip install --user matplotlib numpy
